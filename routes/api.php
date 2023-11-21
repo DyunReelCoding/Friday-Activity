@@ -4,7 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\HouseItemController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PromptController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\MessageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,27 +20,54 @@ use App\Http\Controllers\Api\PromptController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+//Public API's
+Route::post('/login', [AuthController::class, 'login'])->name('user.login');
+Route::post('/user',  [UserController::class, 'store'])->name('user.store');
 
+//Message APIs
+Route::controller(MessageController::class)->group(function () {
+    Route::get('/message',                 'index');
+    Route::get('/message/{id}',            'show');
+    Route::post('/message',               'store');
+    Route::put('/message/{id}',            'update');
+    Route::delete('/message/{id}',         'destroy');
 });
 
-Route::get('/house', [HouseItemController::class, 'index']);
-Route::get('/house/{id}', [HouseItemController::class, 'show']);
-Route::post('/house', [HouseItemController::class, 'store']);
-Route::put('/house/{id}', [HouseItemController::class, 'update']);
-Route::delete('/house/{id}', [HouseItemController::class, 'destroy']);
+Route::controller(PromptController::class)->group(function () {
+    Route::get('/prompt',               'index');
+    Route::get('/prompt/{id}',          'show');
+    Route::post('/prompt',              'store');
+    Route::put('/prompt/{id}',          'update');
+    Route::delete('/prompt/{id}',       'destroy');
+});
 
-Route::get('/user', [UserController::class, 'index']);
-Route::get('/user/{id}', [UserController::class, 'show']);
-Route::post('/user', [UserController::class, 'store'])->name('user.store');
-Route::put('/user/{id}', [UserController::class, 'update'])->name('user.update');
-Route::put('/user/email/{id}', [UserController::class, 'email'])->name('user.email');
-Route::put('/user/password/{id}', [UserController::class, 'password'])->name('user.password');
-Route::delete('/user/{id}', [UserController::class, 'destroy']);
+//User Selection
+Route::get('/user/selection', [UserController::class, 'selection']);
 
-Route::get('/prompt', [PromptController::class, 'index']);
-Route::get('/prompt/{id}', [PromptController::class, 'show']);
-Route::post('/prompt', [PromptController::class, 'store']);
-Route::put('/prompt/{id}', [PromptController::class, 'update']);
-Route::delete('/prompt/{id}', [PromptController::class, 'destroy']);
+//Private API's
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::controller(HouseItemController::class)->group(function () {
+        Route::get('/house',                'index');
+        Route::get('/house/{id}',           'show');
+        Route::post('/house',               'store');
+        Route::put('/house/{id}',           'update');
+        Route::delete('/house/{id}',        'destroy');
+    });
+
+    Route::controller(UserController::class)->group(function () {
+        Route::get('/user',                 'index');
+        Route::get('/user/{id}',            'show');
+        Route::put('/user/{id}',            'update')->name('user.update');
+        Route::put('/user/email/{id}',      'email')->name('user.email');
+        Route::put('/user/password/{id}',   'password')->name('user.password');
+        Route::put('/user/image/{id}',   'image')->name('user.image');
+        Route::delete('/user/{id}',         'destroy');
+    });
+
+
+    // User Specific API'S
+    Route::get('/profile/show',    [ProfileController::class, 'show']);
+    Route::put('/profile/image',   [ProfileController::class, 'image'])->name('profile.image');
+});

@@ -12,12 +12,23 @@ class PromptController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Prompt::all();
+        $prompt = Prompt::select('users.name', 'prompts.prompt', 'prompts.sender', 'prompts.created_at', 'prompts.prompt_id', 'prompts.user_id')
+            ->join('users', 'prompts.user_id', '=', 'users.id');
+
+        if ($request->keyword) {
+            $prompt->where(function ($query) use ($request) {
+                $query->where('users.name', 'like', '%' . $request->keyword . '%')
+                    ->orWhere('prompts.prompt', 'like', '%' . $request->keyword . '%')
+                    ->orWhere('prompts.sender', 'like', '%' . $request->keyword . '%');
+            });
+        }
+
+        return $prompt->get(); //paginate(3) = only 3 will show
     }
 
- 
+
 
     /**
      * Store a newly created resource in storage.
@@ -27,9 +38,9 @@ class PromptController extends Controller
         // Retrieve the validated input data...
         $validated = $request->validated();
 
-       $prompt = Prompt::create($validated);
+        $prompt = Prompt::create($validated);
 
-       return $prompt;
+        return $prompt;
     }
 
     /**
@@ -49,10 +60,10 @@ class PromptController extends Controller
         $validated = $request->validated();
 
         $prompt = Prompt::findOrfail($id);
- 
-        $prompt ->update($validated);
- 
-         return $prompt;
+
+        $prompt->update($validated);
+
+        return $prompt;
     }
 
     /**
